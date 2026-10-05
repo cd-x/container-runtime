@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"runtime"
 	"syscall"
 )
 
@@ -27,6 +28,10 @@ func main() {
 	fmt.Println("PID: ", os.Getpid())
 
 	if err := cmd.Start(); err != nil {
+		panic(err)
+	}
+
+	if err := runtime.SetupProc(); err != nil {
 		panic(err)
 	}
 
