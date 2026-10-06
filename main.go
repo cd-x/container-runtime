@@ -2,7 +2,9 @@ package main
 
 import (
 	r "container-runtime/internal/runtime"
+	u "container-runtime/internal/utils"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"syscall"
@@ -49,10 +51,28 @@ func runContainerInit() {
 		panic(err)
 	}
 
-	fmt.Println("setting up /proc...")
+	fmt.Println("cwd:", readlink("/proc/self/cwd"))
+	fmt.Println("root:", readlink("/proc/self/root"))
+
 	if err := r.SetupProc(); err != nil {
 		panic(err)
 	}
+	fmt.Println("[OK] /proc mounted")
+
+	rootfs := u.GetNewRootPath()
+
+	if err := r.MountDirectory(rootfs); err != nil {
+		panic(err)
+	}
+	fmt.Println("[OK] rootfs mounted")
+
+	if err := r.PivotRoot(rootfs); err != nil {
+		panic(err)
+	}
+	if err := os.Chdir("/"); err != nil {
+		panic(err)
+	}
+	log.Printf("changed directory to /")
 
 	fmt.Println("executing: ", os.Args[1:])
 	err := syscall.Exec(
