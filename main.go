@@ -2,7 +2,6 @@ package main
 
 import (
 	r "container-runtime/internal/runtime"
-	u "container-runtime/internal/utils"
 	"fmt"
 	"log"
 	"os"
@@ -15,7 +14,7 @@ const OLDROOT = "/oldroot"
 func main() {
 
 	if os.Getenv("CONTAINER_INIT") == "1" {
-		runContainerInit()
+		r.RunContainerInit()
 		return
 	}
 
@@ -48,47 +47,4 @@ func main() {
 	if err := cmd.Run(); err != nil {
 		os.Exit(1)
 	}
-}
-
-func runContainerInit() {
-	log.Printf("inside container init with PID:%d\n", os.Getpid())
-
-	if err := r.MakeRootPrivate(); err != nil {
-		panic(err)
-	}
-
-	rootfs := u.GetNewRootPath()
-
-	if err := r.MountDirectory(rootfs); err != nil {
-		panic(err)
-	}
-	fmt.Println("[OK] rootfs mounted")
-
-	if err := r.SetupProc(rootfs); err != nil {
-		panic(err)
-	}
-	log.Println("/proc mounted [OK]")
-
-	if err := r.PivotRoot(rootfs); err != nil {
-		panic(err)
-	}
-
-	fmt.Println("executing: ", os.Args[1:])
-	execErr := syscall.Exec(
-		os.Args[1],
-		os.Args[1:],
-		os.Environ(),
-	)
-
-	if execErr != nil {
-		panic(execErr)
-	}
-}
-
-func readlink(path string) string {
-	value, err := os.Readlink(path)
-	if err != nil {
-		return err.Error()
-	}
-	return value
 }

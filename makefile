@@ -1,5 +1,5 @@
 BINARY := container-runtime
-CMD    ?= /bin/bash
+CMD    ?= /bin/busybox sh
 GO := /usr/local/go/bin/go
 
 .PHONY: all build run clean
