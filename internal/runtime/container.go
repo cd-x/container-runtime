@@ -31,3 +31,8 @@ func MountDirectory(directory string) error {
 	fmt.Printf("mounting directory %s ...\n", directory)
 	return syscall.Mount(directory, directory, "", syscall.MS_BIND, "")
 }
+
+func UnmountOldRoot(directory string) error {
+	fmt.Printf("unmounting directory %s ...\n", directory)
+	return syscall.Unmount(directory, syscall.MNT_DETACH)
+}

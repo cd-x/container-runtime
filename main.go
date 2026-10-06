@@ -10,6 +10,8 @@ import (
 	"syscall"
 )
 
+const OLDROOT = "/oldroot"
+
 func main() {
 
 	if os.Getenv("CONTAINER_INIT") == "1" {
@@ -72,6 +74,12 @@ func runContainerInit() {
 	if err := os.Chdir("/"); err != nil {
 		panic(err)
 	}
+
+	// unmount old root directory from current process
+	if err := r.UnmountOldRoot(OLDROOT); err != nil {
+		panic(err)
+	}
+
 	log.Printf("changed directory to /")
 
 	fmt.Println("executing: ", os.Args[1:])
