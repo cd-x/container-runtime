@@ -10,7 +10,7 @@ build:
 	$(GO) build -o $(BINARY) .
 
 run: build
-	sudo ./$(BINARY) $(CMD)
+	./$(BINARY) $(CMD)
 
 clean:
 	rm -f $(BINARY)

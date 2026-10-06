@@ -31,32 +31,31 @@ func main() {
 	cmd.Stderr = os.Stderr
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWPID | syscall.CLONE_NEWNS,
+		Cloneflags: syscall.CLONE_NEWPID | syscall.CLONE_NEWNS | syscall.CLONE_NEWUSER,
+		UidMappings: []syscall.SysProcIDMap{
+			{ContainerID: 0, HostID: os.Getuid(), Size: 1},
+		},
+		GidMappings: []syscall.SysProcIDMap{
+			{ContainerID: 0, HostID: os.Getgid(), Size: 1},
+		},
+		GidMappingsEnableSetgroups: false,
 	}
-
 	cmd.Env = append(os.Environ(), "CONTAINER_INIT=1")
 
-	// fmt.Println("starting container...")
-	fmt.Println("PID: ", os.Getpid())
+	log.Println("Parent PID: ", os.Getpid())
 
+	log.Println("starting container...")
 	if err := cmd.Run(); err != nil {
-		fmt.Println("child exited: ", err)
 		os.Exit(1)
 	}
 }
 
 func runContainerInit() {
-	fmt.Println("inside container init")
-	fmt.Println("PID:", os.Getpid())
+	log.Printf("inside container init with PID:%d\n", os.Getpid())
 
 	if err := r.MakeRootPrivate(); err != nil {
 		panic(err)
 	}
-
-	fmt.Println("cwd:", readlink("/proc/self/cwd"))
-	fmt.Println("root:", readlink("/proc/self/root"))
-
-	fmt.Println("[OK] /proc mounted")
 
 	rootfs := u.GetNewRootPath()
 
@@ -65,32 +64,24 @@ func runContainerInit() {
 	}
 	fmt.Println("[OK] rootfs mounted")
 
+	if err := r.SetupProc(rootfs); err != nil {
+		panic(err)
+	}
+	log.Println("/proc mounted [OK]")
+
 	if err := r.PivotRoot(rootfs); err != nil {
-		panic(err)
-	}
-	if err := os.Chdir("/"); err != nil {
-		panic(err)
-	}
-	log.Println("changed directory to /")
-
-	// unmount old root directory from current process
-	if err := r.UnmountOldRoot(OLDROOT); err != nil {
-		panic(err)
-	}
-
-	if err := r.SetupProc(); err != nil {
 		panic(err)
 	}
 
 	fmt.Println("executing: ", os.Args[1:])
-	err := syscall.Exec(
+	execErr := syscall.Exec(
 		os.Args[1],
 		os.Args[1:],
 		os.Environ(),
 	)
 
-	if err != nil {
-		panic(err)
+	if execErr != nil {
+		panic(execErr)
 	}
 }
 
