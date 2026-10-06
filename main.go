@@ -56,9 +56,6 @@ func runContainerInit() {
 	fmt.Println("cwd:", readlink("/proc/self/cwd"))
 	fmt.Println("root:", readlink("/proc/self/root"))
 
-	if err := r.SetupProc(); err != nil {
-		panic(err)
-	}
 	fmt.Println("[OK] /proc mounted")
 
 	rootfs := u.GetNewRootPath()
@@ -74,13 +71,16 @@ func runContainerInit() {
 	if err := os.Chdir("/"); err != nil {
 		panic(err)
 	}
+	log.Println("changed directory to /")
 
 	// unmount old root directory from current process
 	if err := r.UnmountOldRoot(OLDROOT); err != nil {
 		panic(err)
 	}
 
-	log.Printf("changed directory to /")
+	if err := r.SetupProc(); err != nil {
+		panic(err)
+	}
 
 	fmt.Println("executing: ", os.Args[1:])
 	err := syscall.Exec(
