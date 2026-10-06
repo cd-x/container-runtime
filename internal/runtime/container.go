@@ -16,3 +16,8 @@ func SetupProc() error {
 		"",
 	)
 }
+
+func MakeRootPrivate() error {
+	fmt.Println("making root private ...")
+	return syscall.Mount("", "/", "", syscall.MS_PRIVATE|syscall.MS_REC, "")
+}

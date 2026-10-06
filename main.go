@@ -45,6 +45,10 @@ func runContainerInit() {
 	fmt.Println("inside container init")
 	fmt.Println("PID:", os.Getpid())
 
+	if err := r.MakeRootPrivate(); err != nil {
+		panic(err)
+	}
+
 	fmt.Println("setting up /proc...")
 	if err := r.SetupProc(); err != nil {
 		panic(err)
