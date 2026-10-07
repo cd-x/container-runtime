@@ -31,6 +31,10 @@ func RunContainerInit() {
 		panic(err)
 	}
 
+	if err := syscall.Sethostname([]byte("container")); err != nil {
+		panic(err)
+	}
+
 	fmt.Println("executing: ", os.Args[1:])
 	execErr := syscall.Exec(
 		os.Args[1],
